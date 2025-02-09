@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/andrei-don/url-shortener/config"
@@ -21,7 +22,17 @@ func ShortenURL(c *gin.Context) {
 
 	shortCode := utils.GenerateShortCode(req.URL)
 
-	_, err := config.DB.Exec("INSERT INTO urls (short_url, original_url) VALUES ($1, $2)", shortCode, req.URL)
+	var existingShortURL string
+	err := config.DB.QueryRow("SELECT short_url FROM urls WHERE original_url = $1", req.URL).Scan(&existingShortURL)
+	if err == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message":   fmt.Sprintf("URL %s is already shortened.", req.URL),
+			"short_url": "http://localhost:8080/" + existingShortURL,
+		})
+		return
+	}
+
+	_, err = config.DB.Exec("INSERT INTO urls (short_url, original_url) VALUES ($1, $2)", shortCode, req.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
