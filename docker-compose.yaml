@@ -27,7 +27,7 @@ services:
       - app_network
 
   url-shortener:
-    image: url-shortener:latest
+    image: "url-shortener:${TAG}"
     restart: always
     environment:
       DATABASE_HOST: "postgres"
