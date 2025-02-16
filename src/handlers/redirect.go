@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	"github.com/andrei-don/url-shortener/config"
@@ -15,6 +16,7 @@ func redirect(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client) {
 	url, err := dbRedis.Get(config.Ctx, shortCode).Result()
 	if err == nil {
 		c.Redirect(http.StatusFound, url)
+		log.Printf("Cache hit for %s", url)
 		return
 	}
 
@@ -27,6 +29,7 @@ func redirect(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client) {
 
 	// When there is a cache miss, we write the shortCode:url key-value pair in redis.
 	dbRedis.Set(config.Ctx, shortCode, url, 0)
+	log.Printf("Cache miss for %s", url)
 	c.Redirect(http.StatusFound, url)
 }
 

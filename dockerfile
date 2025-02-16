@@ -1,6 +1,6 @@
 # Stage 1: Build the Go binary
 FROM golang:1.23.6-alpine AS builder
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=arm64
+ENV CGO_ENABLED=0
 WORKDIR /app
 COPY src/go.mod src/go.sum ./
 RUN go mod download
