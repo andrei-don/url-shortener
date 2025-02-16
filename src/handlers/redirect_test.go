@@ -7,22 +7,23 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/andrei-don/url-shortener/config"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redismock/v9"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRedirect_CacheHit(t *testing.T) {
-	db, mock := redismock.NewClientMock()
-	config.RedisClient = db
+	dbRedis, mockRedis := redismock.NewClientMock()
+
+	dbPsql, _, err := sqlmock.New()
+	assert.NoError(t, err)
 
 	shortUrl := "test"
 	originalUrl := "http://this-is-my-url.com"
-	mock.ExpectGet(shortUrl).SetVal(originalUrl)
+	mockRedis.ExpectGet(shortUrl).SetVal(originalUrl)
 
 	router := gin.Default()
-	router.GET("/:shortUrl", Redirect)
+	router.GET("/:shortUrl", RedirectHandler(dbPsql, dbRedis))
 
 	req, _ := http.NewRequest("GET", "/"+shortUrl, nil)
 	w := httptest.NewRecorder()
@@ -32,16 +33,14 @@ func TestRedirect_CacheHit(t *testing.T) {
 	assert.Equal(t, http.StatusFound, w.Code)
 	assert.Equal(t, originalUrl, w.Header().Get("Location"))
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mockRedis.ExpectationsWereMet())
 }
 
 func TestRedirect_CacheMissAndDBSuccess(t *testing.T) {
 	dbRedis, mockRedis := redismock.NewClientMock()
-	config.RedisClient = dbRedis
 
 	dbPsql, mockPsql, err := sqlmock.New()
 	assert.NoError(t, err)
-	config.DB = dbPsql
 
 	shortUrl := "test"
 	originalUrl := "http://this-is-my-url.com"
@@ -54,7 +53,7 @@ func TestRedirect_CacheMissAndDBSuccess(t *testing.T) {
 	mockRedis.ExpectSet(shortUrl, originalUrl, 0)
 
 	router := gin.Default()
-	router.GET("/:shortUrl", Redirect)
+	router.GET("/:shortUrl", RedirectHandler(dbPsql, dbRedis))
 
 	req, _ := http.NewRequest("GET", "/"+shortUrl, nil)
 	w := httptest.NewRecorder()
@@ -70,11 +69,9 @@ func TestRedirect_CacheMissAndDBSuccess(t *testing.T) {
 
 func TestRedirect_URLNotFound(t *testing.T) {
 	dbRedis, mockRedis := redismock.NewClientMock()
-	config.RedisClient = dbRedis
 
 	dbPsql, mockPsql, err := sqlmock.New()
 	assert.NoError(t, err)
-	config.DB = dbPsql
 
 	shortUrl := "test-non-existent"
 
@@ -83,7 +80,7 @@ func TestRedirect_URLNotFound(t *testing.T) {
 	mockPsql.ExpectQuery("SELECT original_url FROM urls WHERE short_url = \\$1").WithArgs(shortUrl).WillReturnError(sql.ErrNoRows)
 
 	router := gin.Default()
-	router.GET("/:shortUrl", Redirect)
+	router.GET("/:shortUrl", RedirectHandler(dbPsql, dbRedis))
 
 	req, _ := http.NewRequest("GET", "/"+shortUrl, nil)
 	w := httptest.NewRecorder()

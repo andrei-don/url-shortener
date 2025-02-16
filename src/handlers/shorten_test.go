@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/andrei-don/url-shortener/config"
 	"github.com/andrei-don/url-shortener/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redismock/v9"
@@ -16,9 +15,13 @@ import (
 )
 
 func TestShorten_BadRequest(t *testing.T) {
+	dbRedis, _ := redismock.NewClientMock()
+
+	dbPsql, _, err := sqlmock.New()
+	assert.NoError(t, err)
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenURL)
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
 
 	reqBody := []byte(`{"url": "http://example.com"`)
 
@@ -32,20 +35,20 @@ func TestShorten_BadRequest(t *testing.T) {
 }
 
 func TestShorten_ExistingUrl(t *testing.T) {
+	dbRedis, _ := redismock.NewClientMock()
 
-	db, mock, err := sqlmock.New()
+	dbPsql, mockPsql, err := sqlmock.New()
 	assert.NoError(t, err)
-	config.DB = db
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenURL)
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
 
 	originalUrl := "http://this-is-my-url.com"
 	existingShortUrl := "test"
 
 	rows := sqlmock.NewRows([]string{"short_url"}).AddRow(existingShortUrl)
 
-	mock.ExpectQuery("SELECT short_url FROM urls WHERE original_url = \\$1").WithArgs(originalUrl).WillReturnRows(rows)
+	mockPsql.ExpectQuery("SELECT short_url FROM urls WHERE original_url = \\$1").WithArgs(originalUrl).WillReturnRows(rows)
 
 	reqBody := []byte(`{"url": "http://this-is-my-url.com"}`)
 
@@ -60,24 +63,22 @@ func TestShorten_ExistingUrl(t *testing.T) {
 		"short_url": "http://localhost:8080/%s"
 	}`, originalUrl, existingShortUrl), w.Body.String())
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.NoError(t, mockPsql.ExpectationsWereMet())
 }
 
 func TestShorten_DatabaseInsert(t *testing.T) {
 
 	dbRedis, mockRedis := redismock.NewClientMock()
-	config.RedisClient = dbRedis
 
 	dbPsql, mockPsql, err := sqlmock.New()
 	assert.NoError(t, err)
-	config.DB = dbPsql
 
 	//shortUrl := "test"
 	originalUrl := "http://this-is-my-url.com"
 	shortUrl := utils.GenerateShortCode(originalUrl)
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenURL)
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
 
 	t.Run("Insert Success", func(t *testing.T) {
 		mockPsql.ExpectExec(`INSERT INTO urls \(short_url, original_url\) VALUES \(\$1, \$2\)`).WithArgs(shortUrl, originalUrl).WillReturnResult(sqlmock.NewResult(1, 1))
