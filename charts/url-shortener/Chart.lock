@@ -1,0 +1,9 @@
+dependencies:
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 69.4.1
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.12.0
+digest: sha256:63500562b670acf481ab227c8d7e95972db8cd318c7dac4e76e1082e9d712303
+generated: "2025-02-23T14:01:57.414627Z"

@@ -1,0 +1,101 @@
+replicaCount: 1
+
+image:
+  repository: andreidon1/url-shortener
+  tag: v0.0.1
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+database:
+  postgres:
+    enabled: true
+    image: postgres:17.2-alpine
+    host: postgres
+    user: admin
+    password: password
+    dbname: my_db
+    port: 5432
+    initScript: |-
+      CREATE TABLE urls (
+          id SERIAL PRIMARY KEY,
+          short_url TEXT UNIQUE NOT NULL,
+          original_url TEXT NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW()
+      );
+
+cache:
+  redis:
+    enabled: true
+    image: redis:8.0-M03-alpine
+    name: redis
+    port: 6379
+
+nodePortService:
+  enabled: true
+  port: 8080
+  nodePort: 30080
+
+monitoring:
+  installMonitoringStack: true
+  namespace: monitoring
+
+kube-prometheus-stack:
+  namespaceOverride: monitoring
+  alertmanager:
+    enabled: false
+  grafana:
+    namespaceOverride: monitoring
+    grafana.ini:
+      server:
+        root_url: http://local.k8s/grafana
+        serve_from_sub_path: true
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      path: /grafana
+      hosts:
+        - "local.k8s"
+  kube-state-metrics:
+    namespaceOverride: monitoring
+  prometheus-node-exporter:
+    namespaceOverride: monitoring
+  prometheus:
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - "local.k8s"
+      paths:
+        - /prom
+      prometheusSpec:
+        externalUrl: "http://local.k8s/prom"
+
+metallb:
+  enabled: true
+  addressPool: "192.168.64.4-192.168.64.5"
+
+ingress:
+  enabled: true
+  controllerNamespace: ingress-nginx
+  namespaces:
+    - name: default
+      services:
+        - path: /url-shortener(/|$)(.*)
+          service:
+            name: url-shortener
+            port: 8080
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+
+ingress-nginx:
+  namespaceOverride: ingress-nginx
+  controller:
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+        additionalLabels:
+          release: url-shortener

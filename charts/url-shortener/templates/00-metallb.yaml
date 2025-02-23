@@ -1,0 +1,21 @@
+{{- if .Values.metallb.enabled -}}
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: local-pool
+  namespace: default
+spec:
+  addresses:
+  - {{ .Values.metallb.addressPool }}
+
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: local-advertisement
+  namespace: default
+spec:
+  ipAddressPools:
+  - local-pool
+{{- end }}

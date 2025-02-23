@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: url-shortener
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DATABASE_HOST
+              value: "{{ .Release.Name }}-postgres"
+            - name: DATABASE_USER
+              value: {{ .Values.database.postgres.user }}
+            - name: DATABASE_PASSWORD
+              value: {{ .Values.database.postgres.password }}
+            - name: DATABASE_NAME
+              value: {{ .Values.database.postgres.dbname }}
+            - name: REDIS_HOST
+              value: "{{ .Release.Name }}-redis"
+          ports:
+            - containerPort: 8080
