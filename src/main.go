@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/andrei-don/url-shortener/config"
 	"github.com/andrei-don/url-shortener/handlers"
@@ -26,17 +28,41 @@ func main() {
 		"password=%s dbname=%s sslmode=disable",
 		host, psqlPort, user, password, dbname)
 
-	dbPsql, err := config.ConnectDatabase(psqlInfo)
+	dbPsql, err := config.ConnectDatabase(psqlInfo, 10, 1*time.Second)
 	if err != nil {
-		log.Fatalf("Cannot connect to database: %v", err)
+		log.Fatalf("Cannot connect to Postgres: %v", err)
 	}
 
 	dbRedis, err := config.ConnectRedis(addr)
 	if err != nil {
-		log.Fatalf("Cannot connect to database: %v", err)
+		log.Fatalf("Cannot connect to Redis: %v", err)
 	}
 
 	r := gin.Default()
+
+	r.GET("/healthz", func(c *gin.Context) {
+
+		if err := dbPsql.Ping(); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status":  "unhealthy",
+				"details": "PostgreSQL is not reachable",
+			})
+			return
+		}
+
+		if err := dbRedis.Ping(config.Ctx).Err(); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status":  "unhealthy",
+				"details": "Redis is not reachable",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status": "healthy",
+		})
+	})
+
 	r.POST("/shorten", handlers.ShortenUrlHandler(dbPsql, dbRedis))
 	r.GET("/:shortUrl", handlers.RedirectHandler(dbPsql, dbRedis))
 	r.Run(":8080")

@@ -1,0 +1,15 @@
+{{- if .Values.nodePortService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.nodePortService.port }}
+      targetPort: 8080
+      nodePort: {{ .Values.nodePortService.nodePort }}
+{{- end }}

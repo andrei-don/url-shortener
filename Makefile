@@ -1,5 +1,8 @@
 .PHONY:
 
+unit_tests:
+	cd src && go test -v ./...
+
 build:
 	docker build --no-cache -t url-shortener .
 

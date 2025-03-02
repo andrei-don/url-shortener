@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func TestConnectDatabase(t *testing.T) {
 			return dbPsql, nil
 		}
 
-		db, err := ConnectDatabase("mock_dsn")
+		db, err := ConnectDatabase("mock_dsn", 3, 1*time.Second)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, db)
@@ -39,9 +40,9 @@ func TestConnectDatabase(t *testing.T) {
 			return nil, expectedErr
 		}
 
-		db, err := ConnectDatabase("invalid_dsn")
+		db, err := ConnectDatabase("invalid_dsn", 1, 1*time.Second)
 		assert.Nil(t, db)
-		assert.ErrorIs(t, err, expectedErr)
+		assert.EqualError(t, err, fmt.Sprintf("could not connect to database after 1 retries: %v", expectedErr))
 	})
 
 	t.Run("Failure in db.Ping", func(t *testing.T) {
@@ -55,9 +56,9 @@ func TestConnectDatabase(t *testing.T) {
 			return dbPsql, nil
 		}
 
-		db, err := ConnectDatabase("mock_dsn")
+		db, err := ConnectDatabase("mock_dsn", 1, 1*time.Second)
 		assert.Nil(t, db)
-		assert.EqualError(t, err, fmt.Sprintf("database is not reachable: %v", expectedErr))
+		assert.EqualError(t, err, fmt.Sprintf("could not connect to database after 1 retries: %v", expectedErr))
 		assert.NoError(t, mockPsql.ExpectationsWereMet())
 	})
 }
