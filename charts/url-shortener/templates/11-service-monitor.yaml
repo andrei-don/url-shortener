@@ -1,0 +1,19 @@
+{{- if .Values.monitoring.installMonitoringStack }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-monitor
+  namespace: {{ .Values.monitoring.namespace }}
+  labels:
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  namespaceSelector:
+    matchNames:
+      - default 
+  endpoints:
+    - port: metrics
+      interval: 15s
+{{- end }}
