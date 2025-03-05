@@ -10,12 +10,21 @@ import (
 	"github.com/andrei-don/url-shortener/config"
 	"github.com/andrei-don/url-shortener/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
 	psqlPort  = 5432
 	redisPort = 6379
 )
+
+func startMetricsServer() {
+	http.Handle("/metrics", promhttp.Handler())
+	log.Println("Starting metrics server on :9090")
+	if err := http.ListenAndServe(":9090", nil); err != nil {
+		log.Fatalf("Failed to start metrics server: %v", err)
+	}
+}
 
 func main() {
 	host := os.Getenv("DATABASE_HOST")
@@ -38,6 +47,7 @@ func main() {
 		log.Fatalf("Cannot connect to Redis: %v", err)
 	}
 
+	go startMetricsServer()
 	r := gin.Default()
 
 	r.GET("/healthz", func(c *gin.Context) {
