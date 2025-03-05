@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: andreidon1/url-shortener
-  tag: v0.0.3
+  tag: v0.0.4
   pullPolicy: IfNotPresent
 
 service:
@@ -15,7 +15,6 @@ database:
     image: postgres:17.2-alpine
     host: postgres
     user: admin
-    password: password
     dbname: my_db
     port: 5432
     initScript: |-
