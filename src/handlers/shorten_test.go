@@ -21,7 +21,7 @@ func TestShorten_BadRequest(t *testing.T) {
 	assert.NoError(t, err)
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis, "http://localhost:8080"))
 
 	reqBody := []byte(`{"url": "http://example.com"`)
 
@@ -41,7 +41,7 @@ func TestShorten_ExistingUrl(t *testing.T) {
 	assert.NoError(t, err)
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis, "http://localhost:8080"))
 
 	originalUrl := "http://this-is-my-url.com"
 	existingShortUrl := "test"
@@ -78,7 +78,7 @@ func TestShorten_DatabaseInsert(t *testing.T) {
 	shortUrl := utils.GenerateShortCode(originalUrl)
 
 	router := gin.Default()
-	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis))
+	router.POST("/shorten", ShortenUrlHandler(dbPsql, dbRedis, "http://localhost:8080"))
 
 	t.Run("Insert Success", func(t *testing.T) {
 		mockPsql.ExpectExec(`INSERT INTO urls \(short_url, original_url\) VALUES \(\$1, \$2\)`).WithArgs(shortUrl, originalUrl).WillReturnResult(sqlmock.NewResult(1, 1))
