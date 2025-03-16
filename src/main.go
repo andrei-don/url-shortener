@@ -31,6 +31,7 @@ func main() {
 	user := os.Getenv("DATABASE_USER")
 	password := os.Getenv("DATABASE_PASSWORD")
 	dbname := os.Getenv("DATABASE_NAME")
+	baseUrl := os.Getenv("BASE_URL")
 	addr := fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), redisPort)
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -48,6 +49,7 @@ func main() {
 	}
 
 	go startMetricsServer()
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
 	r.GET("/healthz", func(c *gin.Context) {
@@ -73,7 +75,7 @@ func main() {
 		})
 	})
 
-	r.POST("/shorten", handlers.ShortenUrlHandler(dbPsql, dbRedis))
+	r.POST("/shorten", handlers.ShortenUrlHandler(dbPsql, dbRedis, baseUrl))
 	r.GET("/:shortUrl", handlers.RedirectHandler(dbPsql, dbRedis))
 	r.Run(":8080")
 }

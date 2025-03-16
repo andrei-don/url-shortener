@@ -35,6 +35,7 @@ services:
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
       DATABASE_NAME: ${POSTGRES_DB}
       REDIS_HOST: "redis"
+      BASE_URL: "http://localhost:8080"
     depends_on:
       - postgres
       - redis

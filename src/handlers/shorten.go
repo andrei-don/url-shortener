@@ -41,7 +41,7 @@ func init() {
 	prometheus.MustRegister(shortenHistogramLatency)
 }
 
-func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client) {
+func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client, baseURL string) {
 	var req ShortenRequest
 
 	start := time.Now()
@@ -59,7 +59,7 @@ func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client) {
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{
 			"message":   fmt.Sprintf("URL %s is already shortened.", req.URL),
-			"short_url": "http://localhost:8080/" + existingShortURL,
+			"short_url": baseURL + "/" + existingShortURL,
 		})
 		shortenCounterRequests.WithLabelValues("200").Inc()
 		shortenHistogramLatency.WithLabelValues("200").Observe(time.Since(start).Seconds())
@@ -76,13 +76,13 @@ func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client) {
 
 	dbRedis.Set(config.Ctx, shortCode, req.URL, 0)
 
-	c.JSON(http.StatusOK, gin.H{"short_url": "http://localhost:8080/" + shortCode})
+	c.JSON(http.StatusOK, gin.H{"short_url": baseURL + "/" + shortCode})
 	shortenCounterRequests.WithLabelValues("200").Inc()
 	shortenHistogramLatency.WithLabelValues("200").Observe(time.Since(start).Seconds())
 }
 
-func ShortenUrlHandler(dbPsql *sql.DB, dbRedis *redis.Client) gin.HandlerFunc {
+func ShortenUrlHandler(dbPsql *sql.DB, dbRedis *redis.Client, baseURL string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		shortenUrl(c, dbPsql, dbRedis)
+		shortenUrl(c, dbPsql, dbRedis, baseURL)
 	}
 }
