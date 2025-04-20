@@ -1,0 +1,17 @@
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: Redis
+metadata:
+  name: {{ .Release.Name }}-redis
+spec:
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.2.7
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: {{ .Values.storageClass.name }}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+  securityContext:
+    runAsUser: 0

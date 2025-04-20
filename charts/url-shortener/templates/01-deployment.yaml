@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Release.Name }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.app.replicaCount }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
@@ -14,20 +14,31 @@ spec:
     spec:
       containers:
         - name: url-shortener
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           env:
+            - name: BASE_URL
+              value: "{{ .Values.app.baseUrl }}"
             - name: DATABASE_HOST
-              value: "{{ .Release.Name }}-postgres"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgres-app
+                  key: host
             - name: DATABASE_USER
-              value: {{ .Values.database.postgres.user }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgres-app
+                  key: user
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-postgres-password
+                  name: {{ .Release.Name }}-postgres-app
                   key: password
             - name: DATABASE_NAME
-              value: {{ .Values.database.postgres.dbname }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgres-app
+                  key: dbname
             - name: REDIS_HOST
               value: "{{ .Release.Name }}-redis"
           ports:
@@ -36,7 +47,7 @@ spec:
             httpGet:
               path: /healthz
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 60
             periodSeconds: 5
             failureThreshold: 10
 
