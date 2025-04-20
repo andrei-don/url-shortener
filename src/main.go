@@ -38,7 +38,7 @@ func main() {
 		"password=%s dbname=%s sslmode=disable",
 		host, psqlPort, user, password, dbname)
 
-	dbPsql, err := config.ConnectDatabase(psqlInfo, 10, 1*time.Second)
+	dbPsql, err := config.ConnectDatabase(psqlInfo, 10, 5*time.Second)
 	if err != nil {
 		log.Fatalf("Cannot connect to Postgres: %v", err)
 	}
