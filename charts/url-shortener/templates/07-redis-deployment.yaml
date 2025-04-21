@@ -8,7 +8,7 @@ spec:
   storage:
     volumeClaimTemplate:
       spec:
-        storageClassName: {{ .Values.storageClass.name }}
+        storageClassName: {{ .Values.database.redis.storageClassName }}
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
