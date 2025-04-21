@@ -11,6 +11,10 @@ app:
 
 database:
   postgres:
+    storageClassName: longhorn
+    restoreFromBackup:
+      enabled: false
+      PVC: postgres-restored
     initScript: |-
       CREATE TABLE urls (
           id SERIAL PRIMARY KEY,
@@ -20,9 +24,8 @@ database:
       );
       GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE urls TO app;
       GRANT USAGE, SELECT ON SEQUENCE urls_id_seq TO app;
-
-storageClass:
-  name: longhorn
+  redis:
+    storageClassName: longhorn
 
 nodePortService:
   enabled: true

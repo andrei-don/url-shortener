@@ -5,6 +5,14 @@ metadata:
 spec:
   instances: 1
   bootstrap:
+    {{- if .Values.database.postgres.restoreFromBackup.enabled }}
+    recovery:
+      volumeSnapshots:
+        storage:
+          apiGroup: ""
+          kind: PersistentVolumeClaim
+          name: {{ .Values.database.postgres.restoreFromBackup.PVC }}
+    {{- else}}
     initdb:
       database: app
       owner: app
@@ -12,6 +20,8 @@ spec:
         configMapRefs:
           - name: {{ .Release.Name }}-postgres-init
             key: init.sql
+    {{- end }}
   storage:
     size: 5Gi
-    storageClass: {{ .Values.storageClass.name }}
+    storageClass: {{ .Values.database.postgres.storageClassName }}
+    resizeInUseVolumes: False
