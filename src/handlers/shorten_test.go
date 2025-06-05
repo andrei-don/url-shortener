@@ -34,6 +34,31 @@ func TestShorten_BadRequest(t *testing.T) {
 	assert.JSONEq(t, `{"error": "Invalid request"}`, w.Body.String())
 }
 
+func TestNormalizeURL(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+		hasError bool
+	}{
+		{"google.com", "https://google.com", false},
+		{"http://google.com", "http://google.com", false},
+		{"https://google.com", "https://google.com", false},
+		{"example.com/path", "https://example.com/path", false},
+		{"", "", true},
+		{"not-a-url", "https://not-a-url", false},
+	}
+
+	for _, test := range tests {
+		result, err := normalizeURL(test.input)
+		if test.hasError {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		}
+	}
+}
+
 func TestShorten_ExistingUrl(t *testing.T) {
 	dbRedis, _ := redismock.NewClientMock()
 

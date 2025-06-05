@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/andrei-don/url-shortener/config"
@@ -41,6 +43,26 @@ func init() {
 	prometheus.MustRegister(shortenHistogramLatency)
 }
 
+func normalizeURL(inputURL string) (string, error) {
+	// Add protocol if missing
+	if !strings.HasPrefix(inputURL, "http://") && !strings.HasPrefix(inputURL, "https://") {
+		inputURL = "https://" + inputURL
+	}
+
+	// Validate URL
+	parsedURL, err := url.Parse(inputURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Check if it's a valid URL with host
+	if parsedURL.Host == "" {
+		return "", fmt.Errorf("invalid URL: missing host")
+	}
+
+	return parsedURL.String(), nil
+}
+
 func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client, baseURL string) {
 	var req ShortenRequest
 
@@ -52,13 +74,21 @@ func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client, baseURL s
 		return
 	}
 
-	shortCode := utils.GenerateShortCode(req.URL)
+	normalizedURL, err := normalizeURL(req.URL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
+		shortenCounterRequests.WithLabelValues("400").Inc()
+		shortenHistogramLatency.WithLabelValues("400").Observe(time.Since(start).Seconds())
+		return
+	}
+
+	shortCode := utils.GenerateShortCode(normalizedURL)
 
 	var existingShortURL string
-	err := dbPsql.QueryRow("SELECT short_url FROM urls WHERE original_url = $1", req.URL).Scan(&existingShortURL)
+	err = dbPsql.QueryRow("SELECT short_url FROM urls WHERE original_url = $1", normalizedURL).Scan(&existingShortURL)
 	if err == nil {
 		c.JSON(http.StatusOK, gin.H{
-			"message":   fmt.Sprintf("URL %s is already shortened.", req.URL),
+			"message":   fmt.Sprintf("URL %s is already shortened.", normalizedURL),
 			"short_url": baseURL + "/" + existingShortURL,
 		})
 		shortenCounterRequests.WithLabelValues("200").Inc()
@@ -66,7 +96,7 @@ func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client, baseURL s
 		return
 	}
 
-	_, err = dbPsql.Exec("INSERT INTO urls (short_url, original_url) VALUES ($1, $2)", shortCode, req.URL)
+	_, err = dbPsql.Exec("INSERT INTO urls (short_url, original_url) VALUES ($1, $2)", shortCode, normalizedURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		shortenCounterRequests.WithLabelValues("500").Inc()
@@ -74,7 +104,7 @@ func shortenUrl(c *gin.Context, dbPsql *sql.DB, dbRedis *redis.Client, baseURL s
 		return
 	}
 
-	dbRedis.Set(config.Ctx, shortCode, req.URL, 0)
+	dbRedis.Set(config.Ctx, shortCode, normalizedURL, 0)
 
 	c.JSON(http.StatusOK, gin.H{"short_url": baseURL + "/" + shortCode})
 	shortenCounterRequests.WithLabelValues("200").Inc()
