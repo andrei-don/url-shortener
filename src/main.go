@@ -49,8 +49,12 @@ func main() {
 	}
 
 	go startMetricsServer()
+
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	r.Static("/static", "./static")
+	r.StaticFile("/", "./static/index.html")
 
 	r.GET("/healthz", func(c *gin.Context) {
 

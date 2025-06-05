@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        <div class="form-container">
+            <input type="url" id="urlInput" placeholder="Enter URL to shorten..." required>
+            <button onclick="shortenUrl()">Shorten</button>
+        </div>
+        <div id="result" class="result hidden">
+            <p>Shortened URL:</p>
+            <a id="shortUrl" href="#" target="_blank"></a>
+            <button id="copyButton" onclick="copyToClipboard()">
+                <span id="copyIcon">📋</span>
+                <span id="copyText">Copy</span>
+            </button>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

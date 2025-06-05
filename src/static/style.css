@@ -1,0 +1,230 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e2e8f0;
+}
+
+.container {
+    background: linear-gradient(145deg, #1e293b, #334155);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3rem 2.5rem;
+    border-radius: 20px;
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+    width: 100%;
+    max-width: 550px;
+    transition: all 0.3s ease;
+}
+
+.container:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 35px 70px -12px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: #f8fafc;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a855f7, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+}
+
+input {
+    flex: 1;
+    min-width: 250px;
+    padding: 1rem 1.25rem;
+    background: rgba(30, 41, 59, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 1rem;
+    color: #f1f5f9;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+input::placeholder {
+    color: #94a3b8;
+}
+
+input:focus {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+button {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #a855f7, #3b82f6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.result {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(145deg, #0f172a, #1e293b);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result p {
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.hidden {
+    display: none;
+}
+
+#shortUrl {
+    display: inline-block;
+    margin: 1rem 0 1.5rem 0;
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(96, 165, 250, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    transition: all 0.3s ease;
+}
+
+#shortUrl:hover {
+    background: rgba(96, 165, 250, 0.2);
+    transform: translateY(-1px);
+}
+
+.result button {
+    background: linear-gradient(135deg, #10b981, #059669);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 auto;
+}
+
+.result button:hover {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+#copyIcon {
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+#copyButton.copied #copyIcon {
+    transform: scale(1.2);
+}
+
+#copyButton.copied {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+}
+
+/* Success animation */
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.check-animation {
+    animation: checkmark 0.4s ease-out;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+    .container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-container {
+        flex-direction: column;
+    }
+    
+    input {
+        min-width: unset;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+}
