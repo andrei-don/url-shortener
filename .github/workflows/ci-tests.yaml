@@ -31,4 +31,4 @@ jobs:
 
       - name: Run the integrations tests
         run: |
-          make integration_tests
+          DATABASE_SSLMODE=disable make integration_tests

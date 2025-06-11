@@ -32,11 +32,16 @@ func main() {
 	password := os.Getenv("DATABASE_PASSWORD")
 	dbname := os.Getenv("DATABASE_NAME")
 	baseUrl := os.Getenv("BASE_URL")
+	sslMode := os.Getenv("DATABASE_SSLMODE")
 	addr := fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), redisPort)
 
+	if sslMode == "" {
+		sslMode = "verify-ca" // Default to require SSL
+	}
+
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, psqlPort, user, password, dbname)
+		"password=%s dbname=%s sslmode=%s",
+		host, psqlPort, user, password, dbname, sslMode)
 
 	dbPsql, err := config.ConnectDatabase(psqlInfo, 10, 5*time.Second)
 	if err != nil {
